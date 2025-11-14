@@ -77,7 +77,7 @@ model Reconciliation {
   razorpayPaymentId   String?
   easyecomOrderId     String?
 
-  status              ReconciliationStatus
+  status              String
   matchConfidence     Float    // 0-100 percentage
 
   shopifyAmount       Float?
@@ -115,13 +115,4 @@ model ReconciliationLog {
 
   @@index([runId])
   @@index([startTime])
-}
-
-enum ReconciliationStatus {
-  MATCHED
-  PARTIAL_MATCH
-  UNMATCHED
-  DISCREPANCY
-  UNDER_REVIEW
-  RESOLVED
 }

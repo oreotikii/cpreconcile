@@ -3,14 +3,14 @@ import logger from '../utils/logger';
 import shopifyService from './shopify.service';
 import razorpayService from './razorpay.service';
 import easyecomService from './easyecom.service';
-import { ReconciliationStatus } from '@prisma/client';
+import { ReconciliationStatus, ReconciliationStatusType } from '../types/reconciliation.types';
 
 interface MatchResult {
   shopifyOrderId?: string;
   razorpayPaymentId?: string;
   easyecomOrderId?: string;
   matchConfidence: number;
-  status: ReconciliationStatus;
+  status: ReconciliationStatusType;
   amountDifference?: number;
   discrepancyNotes?: string;
 }
