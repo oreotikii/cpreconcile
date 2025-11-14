@@ -9,7 +9,7 @@ const router = Router();
  * GET /api/health
  * Health check endpoint
  */
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (_req: Request, res: Response) => {
   try {
     // Check database connection
     await prisma.$queryRaw`SELECT 1`;
@@ -34,7 +34,7 @@ router.get('/', async (req: Request, res: Response) => {
  * GET /api/status
  * Get system status
  */
-router.get('/status', async (req: Request, res: Response) => {
+router.get('/status', async (_req: Request, res: Response) => {
   try {
     const [shopifyCount, razorpayCount, easyecomCount, reconciliationCount] = await Promise.all([
       prisma.shopifyOrder.count(),
