@@ -1,0 +1,127 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model ShopifyOrder {
+  id                String   @id @default(cuid())
+  shopifyOrderId    String   @unique
+  shopifyOrderNumber String
+  email             String?
+  totalPrice        Float
+  currency          String
+  financialStatus   String
+  fulfillmentStatus String?
+  createdAt         DateTime
+  updatedAt         DateTime @updatedAt
+  rawData           String   // JSON string of the full order data
+
+  reconciliations   Reconciliation[]
+
+  @@index([shopifyOrderId])
+  @@index([createdAt])
+}
+
+model RazorpayPayment {
+  id              String   @id @default(cuid())
+  razorpayId      String   @unique
+  orderId         String?
+  amount          Float
+  currency        String
+  status          String
+  method          String?
+  email           String?
+  contact         String?
+  createdAt       DateTime
+  updatedAt       DateTime @updatedAt
+  rawData         String   // JSON string of the full payment data
+
+  reconciliations Reconciliation[]
+
+  @@index([razorpayId])
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+model EasyecomOrder {
+  id               String   @id @default(cuid())
+  easyecomOrderId  String   @unique
+  referenceNumber  String?
+  marketplaceOrderId String?
+  totalAmount      Float
+  currency         String
+  status           String
+  paymentStatus    String?
+  createdAt        DateTime
+  updatedAt        DateTime @updatedAt
+  rawData          String   // JSON string of the full order data
+
+  reconciliations  Reconciliation[]
+
+  @@index([easyecomOrderId])
+  @@index([marketplaceOrderId])
+  @@index([createdAt])
+}
+
+model Reconciliation {
+  id                  String   @id @default(cuid())
+
+  shopifyOrderId      String?
+  razorpayPaymentId   String?
+  easyecomOrderId     String?
+
+  status              ReconciliationStatus
+  matchConfidence     Float    // 0-100 percentage
+
+  shopifyAmount       Float?
+  razorpayAmount      Float?
+  easyecomAmount      Float?
+
+  amountDifference    Float?
+  discrepancyNotes    String?
+
+  reconciledAt        DateTime @default(now())
+  reviewedAt          DateTime?
+  reviewedBy          String?
+
+  shopifyOrder        ShopifyOrder?    @relation(fields: [shopifyOrderId], references: [id])
+  razorpayPayment     RazorpayPayment? @relation(fields: [razorpayPaymentId], references: [id])
+  easyecomOrder       EasyecomOrder?   @relation(fields: [easyecomOrderId], references: [id])
+
+  @@index([status])
+  @@index([reconciledAt])
+  @@index([shopifyOrderId])
+  @@index([razorpayPaymentId])
+  @@index([easyecomOrderId])
+}
+
+model ReconciliationLog {
+  id          String   @id @default(cuid())
+  runId       String
+  startTime   DateTime
+  endTime     DateTime?
+  status      String
+  recordsProcessed Int   @default(0)
+  recordsMatched   Int   @default(0)
+  recordsUnmatched Int   @default(0)
+  errors      String?  // JSON string of errors
+
+  @@index([runId])
+  @@index([startTime])
+}
+
+enum ReconciliationStatus {
+  MATCHED
+  PARTIAL_MATCH
+  UNMATCHED
+  DISCREPANCY
+  UNDER_REVIEW
+  RESOLVED
+}
