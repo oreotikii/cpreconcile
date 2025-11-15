@@ -45,6 +45,8 @@ async function testAppAuth() {
         headers: {
           'x-api-key': apiKey,
           'Content-Type': 'application/json',
+          'Accept': 'application/json,text/html,application/xhtml+xml,application/xml,text/*;q=0.9,image/*;q=0.8,*/*;q=0.7',
+          'User-Agent': 'Mozilla/5.0 (compatible; CPReconcile/1.0)',
         },
       }
     );

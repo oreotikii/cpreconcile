@@ -72,6 +72,7 @@ export class EasyecomService {
             headers: {
               'x-api-key': config.easyecom.apiKey,
               'Content-Type': 'application/json',
+              'Accept': 'application/json',
             },
           });
 
