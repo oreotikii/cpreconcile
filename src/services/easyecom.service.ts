@@ -24,14 +24,16 @@ export class EasyecomService {
       baseURL: config.easyecom.apiUrl,
       headers: {
         'Content-Type': 'application/json',
+        'x-api-key': config.easyecom.apiKey,
+        'x-api-email': config.easyecom.email,
       },
     });
   }
 
   private getAuthHeaders(): any {
     return {
-      'api-key': config.easyecom.apiKey,
-      'email': config.easyecom.email,
+      'x-api-key': config.easyecom.apiKey,
+      'x-api-email': config.easyecom.email,
     };
   }
 

@@ -70,7 +70,30 @@ A comprehensive backend reconciliation system for Shopify, Razorpay, and Easyeco
 - API credentials for:
   - Shopify (Store URL, Access Token)
   - Razorpay (Key ID, Key Secret)
-  - Easyecom (API Key, Email)
+  - Easyecom (x-api-key, Registered Email)
+
+## API Credentials Setup
+
+### Easyecom API Configuration
+
+Easyecom uses an **x-api authentication system** with two required headers:
+
+1. **x-api-key**: Your unique API key from Easyecom
+2. **x-api-email**: Your registered Easyecom account email
+
+**How to get your Easyecom API credentials:**
+
+1. Log in to your Easyecom account
+2. Navigate to **Settings** → **API Settings** or **Integrations**
+3. Generate or copy your **API Key** (x-api-key)
+4. Use your **registered email address** (x-api-email)
+5. The API base URL is: `https://api.easyecom.io`
+
+**Important Notes:**
+- Both headers are required for all API requests
+- The email must match your registered Easyecom account
+- Keep your API key secure and never commit it to version control
+- Refer to [Easyecom API Documentation](https://api-docs.easyecom.io/) for more details
 
 ## Installation
 
@@ -110,8 +133,8 @@ RAZORPAY_KEY_SECRET=your_razorpay_key_secret
 
 # Easyecom Configuration
 EASYECOM_API_URL=https://api.easyecom.io
-EASYECOM_API_KEY=your_easyecom_api_key
-EASYECOM_EMAIL=your_easyecom_email
+EASYECOM_API_KEY=your_x_api_key_here
+EASYECOM_EMAIL=your_registered_email_here
 
 # Reconciliation Settings
 RECONCILIATION_CRON_SCHEDULE=0 */6 * * *
