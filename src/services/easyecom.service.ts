@@ -68,7 +68,12 @@ export class EasyecomService {
 
       for (const endpoint of authEndpoints) {
         try {
-          const response = await this.client.post<AuthResponse>(endpoint, authPayload);
+          const response = await this.client.post<AuthResponse>(endpoint, authPayload, {
+            headers: {
+              'x-api-key': config.easyecom.apiKey,
+              'Content-Type': 'application/json',
+            },
+          });
 
           // Extract token from response
           const token = response.data.token || response.data.access_token;

@@ -126,9 +126,13 @@ Easyecom V2.1 API uses **JWT token-based authentication** with dual authorizatio
 
 **Technical Details:**
 - Token endpoint: `POST https://api.easyecom.io/access/token`
-- Request body: `{email, password, location_key}`
+- Authentication request requires:
+  - Header: `x-api-key: <your_api_key>` (mandatory)
+  - Body: `{email, password, location_key}`
 - Response: `{token: "jwt_token_here"}`
-- All subsequent API calls require both Bearer token AND x-api-key headers
+- All subsequent API calls require BOTH:
+  - `Authorization: Bearer <token>` header
+  - `x-api-key: <your_api_key>` header
 
 **Important Notes:**
 - All credentials must be from your **Primary Account**
