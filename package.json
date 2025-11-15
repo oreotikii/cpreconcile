@@ -9,6 +9,7 @@
     "dev": "ts-node src/index.ts",
     "dev:watch": "nodemon --exec ts-node src/index.ts",
     "test:easyecom": "ts-node scripts/test-easyecom-auth.ts",
+    "test:easyecom:login": "ts-node scripts/test-easyecom-login.ts",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
