@@ -45,14 +45,9 @@ export class EasyecomService {
     try {
       logger.info('Authenticating with Easyecom API...');
 
-      // Try common authentication endpoints
+      // Official Easyecom V2.1 token endpoint
       const authEndpoints = [
-        '/auth/login',
-        '/api/auth/login',
-        '/login',
-        '/api/login',
-        '/authenticate',
-        '/api/authenticate',
+        '/access/token',
         '/token',
         '/api/token',
       ];

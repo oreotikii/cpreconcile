@@ -117,12 +117,18 @@ Easyecom V2.1 API uses **JWT token-based authentication** with dual authorizatio
 
 **How Authentication Works:**
 
-1. System authenticates with email, password, and location_key to obtain JWT token
+1. System calls `POST /access/token` with email, password, and location_key to obtain JWT token
 2. JWT token is cached for 90 days
 3. All API calls use BOTH:
    - `Authorization: Bearer <jwt_token>` header
    - `x-api-key: <your_api_key>` header
 4. Token automatically refreshes when expired
+
+**Technical Details:**
+- Token endpoint: `POST https://api.easyecom.io/access/token`
+- Request body: `{email, password, location_key}`
+- Response: `{token: "jwt_token_here"}`
+- All subsequent API calls require both Bearer token AND x-api-key headers
 
 **Important Notes:**
 - All credentials must be from your **Primary Account**
