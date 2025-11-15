@@ -57,6 +57,15 @@ export class EasyecomService {
         queryParams.end_date = params.endDate;
       }
 
+      logger.info('Easyecom API Request:', {
+        url: '/orders/V2/getOrders',
+        headers: {
+          'x-api-key': config.easyecom.apiKey ? '***' + config.easyecom.apiKey.slice(-4) : 'missing',
+          'x-api-email': config.easyecom.email || 'missing',
+        },
+        params: queryParams,
+      });
+
       const response = await this.client.get('/orders/V2/getOrders', {
         headers: this.getAuthHeaders(),
         params: queryParams,
@@ -66,7 +75,21 @@ export class EasyecomService {
       logger.info(`Fetched ${orders.length} orders from Easyecom`);
       return orders;
     } catch (error: any) {
-      logger.error('Error fetching Easyecom orders:', error.message);
+      logger.error('Error fetching Easyecom orders:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
+      });
+
+      if (error.response?.status === 401) {
+        logger.error('Authentication failed. Please verify:');
+        logger.error('1. EASYECOM_API_KEY is set correctly in .env');
+        logger.error('2. EASYECOM_EMAIL matches your registered Easyecom email');
+        logger.error('3. API credentials are active in your Easyecom account');
+      }
+
       throw error;
     }
   }
