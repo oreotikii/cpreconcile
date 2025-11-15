@@ -19,8 +19,10 @@ interface Config {
   };
   easyecom: {
     apiUrl: string;
-    apiKey: string;
     email: string;
+    password: string;
+    locationKey: string;
+    apiKey: string;
   };
   reconciliation: {
     cronSchedule: string;
@@ -50,8 +52,10 @@ const config: Config = {
   },
   easyecom: {
     apiUrl: process.env.EASYECOM_API_URL || 'https://api.easyecom.io',
-    apiKey: process.env.EASYECOM_API_KEY || '',
     email: process.env.EASYECOM_EMAIL || '',
+    password: process.env.EASYECOM_PASSWORD || '',
+    locationKey: process.env.EASYECOM_LOCATION_KEY || '',
+    apiKey: process.env.EASYECOM_API_KEY || '',
   },
   reconciliation: {
     cronSchedule: process.env.RECONCILIATION_CRON_SCHEDULE || '0 */6 * * *',

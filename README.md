@@ -76,49 +76,59 @@ A comprehensive backend reconciliation system for Shopify, Razorpay, and Easyeco
 
 ### Easyecom API Configuration
 
-**⚠️ Important: Easyecom Authentication**
+**⚠️ Important: Easyecom V2.1 Authentication**
 
-Easyecom's authentication system may vary depending on your account type and API version. This system currently implements **x-api authentication**, but you may need different credentials.
+Easyecom V2.1 API uses **JWT token-based authentication** with dual authorization:
 
-**How to get your Easyecom API credentials:**
+1. **JWT Token** (Authorization: Bearer <token>) - Valid for 90 days
+2. **x-api-key** header - Static API key from your primary account
 
-1. **Contact Easyecom Support**: Email care@easyecom.io to request:
-   - API access for your account
-   - Specific authentication method (API key, Email/Password, or token-based)
-   - Complete API documentation
+**Required Credentials:**
 
-2. **Access Your Account Dashboard**:
-   - Log in to your Easyecom account
+| Credential | Purpose | Where to Get It |
+|------------|---------|----------------|
+| `EASYECOM_EMAIL` | Your registered Easyecom email | Your account login email |
+| `EASYECOM_PASSWORD` | Your Easyecom account password | Your account login password |
+| `EASYECOM_LOCATION_KEY` | Location identifier | **Settings** → **Location Master** page (Primary Account) |
+| `EASYECOM_API_KEY` | x-api-key for API authorization | **Settings** → **API Settings** (Primary Account only) |
+
+**Setup Steps:**
+
+1. **Log in to your Easyecom Primary Account**
+   - Secondary accounts cannot generate API credentials
+
+2. **Get Location Key**:
+   - Navigate to **Settings** → **Location Master**
+   - Copy the location_key for your primary location
+
+3. **Generate x-api-key**:
    - Navigate to **Settings** → **API Settings** or **Integrations**
-   - Generate or copy your API credentials
-   - Note which type of credentials you receive
+   - Generate or copy your **x-api-key**
+   - This must be done from the primary account
 
-3. **Test Your Credentials**:
-   ```bash
-   # Test direct authentication methods
-   npm run test:easyecom
-
-   # Test if login/token authentication is required
-   npm run test:easyecom:login
+4. **Set Environment Variables**:
+   ```env
+   EASYECOM_API_URL=https://api.easyecom.io
+   EASYECOM_EMAIL=your_registered_email
+   EASYECOM_PASSWORD=your_account_password
+   EASYECOM_LOCATION_KEY=your_location_key
+   EASYECOM_API_KEY=your_x_api_key
    ```
 
-**Expected Environment Variables:**
-```env
-EASYECOM_API_URL=https://api.easyecom.io
-EASYECOM_API_KEY=your_api_key_or_password_here
-EASYECOM_EMAIL=your_registered_email_here
-```
+**How Authentication Works:**
 
-**Common Authentication Methods:**
-- `x-api-key` and `x-api-email` headers (currently implemented)
-- Email and Password authentication
-- Bearer token / Access-Token authentication
-- Two-step: Login to get token, then use token for API calls
+1. System authenticates with email, password, and location_key to obtain JWT token
+2. JWT token is cached for 90 days
+3. All API calls use BOTH:
+   - `Authorization: Bearer <jwt_token>` header
+   - `x-api-key: <your_api_key>` header
+4. Token automatically refreshes when expired
 
 **Important Notes:**
-- The email must match your registered Easyecom account
-- Keep your API key/password secure and never commit it to version control
-- If you receive "Role authentication failed" errors, contact Easyecom support
+- All credentials must be from your **Primary Account**
+- JWT token is automatically managed - you don't need to manually refresh it
+- Keep all credentials secure and never commit them to version control
+- Contact Easyecom support at care@easyecom.io if you need help accessing these settings
 - Refer to [Easyecom API Documentation](https://api-docs.easyecom.io/) for more details
 
 ## Installation
@@ -397,19 +407,19 @@ npm run lint
 2. **API authentication failures**
    - Verify all API credentials in `.env`
    - Check API token permissions and expiry
-   - **For Easyecom 401 "Role authentication failed" errors**:
-     ```bash
-     # Test direct authentication methods (7 different approaches)
-     npm run test:easyecom
-
-     # Test login/token-based authentication (10 endpoints × 4 methods)
-     npm run test:easyecom:login
-     ```
-   - Common Easyecom authentication issues:
-     - "Role authentication failed" → Incorrect authentication method or missing credentials
-     - "Invalid Api token" → Using Bearer token format but wrong token value
-     - Contact Easyecom support at care@easyecom.io with test results for assistance
-   - Once correct method is identified, we can update the service implementation
+   - **For Easyecom authentication errors**:
+     - Ensure you have ALL four required credentials:
+       - `EASYECOM_EMAIL` - Your account email
+       - `EASYECOM_PASSWORD` - Your account password
+       - `EASYECOM_LOCATION_KEY` - From Location Master page
+       - `EASYECOM_API_KEY` - x-api-key from API Settings
+     - All credentials must be from your **Primary Account**
+     - Check logs for specific error messages:
+       - "Authentication failed" → Verify email/password/location_key
+       - "401 Unauthorized" on API calls → Check if x-api-key is set correctly
+       - "Role authentication failed" → Ensure account has API access enabled
+     - JWT token is automatically managed and cached for 90 days
+     - Contact Easyecom support at care@easyecom.io for assistance
 
 3. **Reconciliation not running**
    - Check cron schedule format
