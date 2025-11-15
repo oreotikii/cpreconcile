@@ -42,7 +42,7 @@ const config: Config = {
   shopify: {
     shopUrl: process.env.SHOPIFY_SHOP_URL || '',
     accessToken: process.env.SHOPIFY_ACCESS_TOKEN || '',
-    apiVersion: process.env.SHOPIFY_API_VERSION || '2024-01',
+    apiVersion: process.env.SHOPIFY_API_VERSION || '2025-10',
   },
   razorpay: {
     keyId: process.env.RAZORPAY_KEY_ID || '',
