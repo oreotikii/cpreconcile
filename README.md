@@ -133,12 +133,47 @@ npm run db:migrate
 npm run dev
 ```
 
+The server will start on `http://localhost:3000`
+
 ### Production Mode
 
 ```bash
 npm run build
 npm start
 ```
+
+## Dashboard
+
+The system includes a beautiful web-based dashboard for easy visualization and management of reconciliation data.
+
+### Access the Dashboard
+
+Once the server is running, open your browser and navigate to:
+```
+http://localhost:3000
+```
+
+### Dashboard Features
+
+- **Real-time Statistics**: View counts for Shopify orders, Razorpay payments, Easyecom orders, and reconciliations
+- **Date Range Selection**: Choose specific date ranges or use lookback days for data operations
+- **Platform Sync**: Manually sync data from Shopify, Razorpay, Easyecom, or all platforms at once
+- **Run Reconciliation**: Trigger manual reconciliation runs with custom date ranges
+- **Reconciliation Results**: View detailed results with:
+  - Summary cards showing matched, partial matches, unmatched, and discrepancies
+  - Interactive table with confidence scores and detailed information
+  - Status badges for easy identification
+- **Recent Logs**: View history of recent reconciliation runs with statistics
+- **Auto-refresh**: System statistics refresh automatically every 30 seconds
+- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
+
+### Dashboard Usage Flow
+
+1. **Initial Setup**: Configure your API credentials in `.env` file
+2. **Sync Data**: Click "Sync All Platforms" or sync individual platforms
+3. **Run Reconciliation**: Set your date range and click "Run Reconciliation"
+4. **View Results**: Review matched and unmatched records in the results table
+5. **Monitor**: Check recent logs to track reconciliation history
 
 ## API Endpoints
 

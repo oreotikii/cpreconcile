@@ -1,4 +1,5 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
+import path from 'path';
 import config from './config';
 import logger from './utils/logger';
 import reconciliationRoutes from './routes/reconciliation.routes';
@@ -11,19 +12,22 @@ const app: Express = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '../public')));
+
 // Request logging
 app.use((req: Request, _res: Response, next: NextFunction) => {
   logger.info(`${req.method} ${req.path}`);
   next();
 });
 
-// Routes
+// API Routes
 app.use('/api/health', healthRoutes);
 app.use('/api/reconciliation', reconciliationRoutes);
 app.use('/api/sync', syncRoutes);
 
-// Root endpoint
-app.get('/', (_req: Request, res: Response) => {
+// API documentation endpoint
+app.get('/api', (_req: Request, res: Response) => {
   res.json({
     name: 'CPReconcile',
     version: '1.0.0',
