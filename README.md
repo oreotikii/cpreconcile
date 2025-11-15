@@ -371,6 +371,16 @@ npm run lint
 2. **API authentication failures**
    - Verify all API credentials in `.env`
    - Check API token permissions and expiry
+   - **For Easyecom 401 errors**: Run the diagnostic test script:
+     ```bash
+     npm run test:easyecom
+     ```
+     This will test multiple authentication methods and identify the correct one
+   - Easyecom authentication may use:
+     - `x-api-key` and `x-api-email` headers (current implementation)
+     - Email and Password authentication
+     - Bearer token / Access-Token header
+   - Contact Easyecom support at care@easyecom.io to verify correct authentication method
 
 3. **Reconciliation not running**
    - Check cron schedule format

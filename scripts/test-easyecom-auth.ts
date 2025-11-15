@@ -37,6 +37,7 @@ async function testEasyecomAuth() {
         'x-api-key': apiKey,
         'x-api-email': email,
       },
+      params: {},
     },
     {
       name: 'X-Api-Key and X-Api-Email (Pascal-Case)',
@@ -45,14 +46,51 @@ async function testEasyecomAuth() {
         'X-Api-Key': apiKey,
         'X-Api-Email': email,
       },
+      params: {},
     },
     {
-      name: 'api_key and email (underscore)',
+      name: 'Authorization Bearer Token (if API key is token)',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      params: {},
+    },
+    {
+      name: 'Access-Token header (webhook style)',
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Token': apiKey,
+      },
+      params: {},
+    },
+    {
+      name: 'Email and Password in headers',
+      headers: {
+        'Content-Type': 'application/json',
+        'email': email,
+        'password': apiKey,
+      },
+      params: {},
+    },
+    {
+      name: 'Email and API Key in query params',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      params: {
+        email: email,
+        api_key: apiKey,
+      },
+    },
+    {
+      name: 'api_key and email in headers (underscore)',
       headers: {
         'Content-Type': 'application/json',
         'api_key': apiKey,
         'email': email,
       },
+      params: {},
     },
   ];
 
@@ -64,6 +102,7 @@ async function testEasyecomAuth() {
         params: {
           limit: 1,
           offset: 0,
+          ...combo.params,
         },
       });
 
