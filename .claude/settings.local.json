@@ -4,7 +4,10 @@
       "WebFetch(domain:api-docs.easyecom.io)",
       "Bash(node test-easyecom-now.js:*)",
       "Bash(node:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
