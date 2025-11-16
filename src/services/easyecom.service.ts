@@ -4,15 +4,25 @@ import logger from '../utils/logger';
 import prisma from '../utils/database';
 
 export interface EasyecomOrderData {
-  order_id: string;
-  reference_number: string;
-  marketplace_order_id: string;
-  total_amount: number;
-  currency: string;
-  status: string;
-  payment_status: string;
-  created_at: string;
-  updated_at: string;
+  order_id: number | string;
+  invoice_id?: number;
+  reference_code?: string;
+  marketplace?: string;
+  marketplace_id?: number;
+  invoice_currency_code?: string;
+  order_date?: string;
+  queue_status?: number;
+  last_update_date?: string;
+  total?: number;
+  // Legacy fields for compatibility
+  reference_number?: string;
+  marketplace_order_id?: string;
+  total_amount?: number;
+  currency?: string;
+  status?: string;
+  payment_status?: string;
+  created_at?: string;
+  updated_at?: string;
   [key: string]: any;
 }
 
@@ -77,15 +87,31 @@ export class EasyecomService {
           });
 
           // Extract token from response
-          const token = response.data.token || response.data.access_token;
+          // Easyecom returns: { data: { token: { jwt_token: "...", expires_in: ... } } }
+          let token = null;
+          let expiresIn = 90 * 24 * 60 * 60 * 1000; // Default 90 days in ms
+
+          if (response.data.data?.token?.jwt_token) {
+            // Nested structure from /access/token
+            token = response.data.data.token.jwt_token;
+            if (response.data.data.token.expires_in) {
+              expiresIn = response.data.data.token.expires_in * 1000; // Convert seconds to ms
+            }
+          } else if (response.data.token) {
+            // Direct token field
+            token = response.data.token;
+          } else if (response.data.access_token) {
+            // Alternative field name
+            token = response.data.access_token;
+          }
 
           if (token) {
             this.authToken = token;
-            // Token is valid for 90 days according to documentation
-            this.tokenExpiry = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+            this.tokenExpiry = new Date(Date.now() + expiresIn);
 
             logger.info(`✅ Successfully authenticated with Easyecom via ${endpoint}`);
             logger.info(`Token expires at: ${this.tokenExpiry.toISOString()}`);
+            logger.info(`Token type: ${response.data.data?.token?.token_type || 'bearer'}`);
 
             return token;
           }
@@ -157,11 +183,9 @@ export class EasyecomService {
     offset?: number;
   }): Promise<EasyecomOrderData[]> {
     try {
-      const queryParams: any = {
-        limit: params.limit || 100,
-        offset: params.offset || 0,
-      };
+      const queryParams: any = {};
 
+      // Easyecom requires dates in format: YYYY-MM-DD HH:MM:SS
       if (params.startDate) {
         queryParams.start_date = params.startDate;
       }
@@ -171,17 +195,18 @@ export class EasyecomService {
       }
 
       logger.info('Fetching Easyecom orders:', {
-        url: '/orders/V2/getOrders',
+        url: '/orders/V2/getAllOrders',
         params: queryParams,
       });
 
       const headers = await this.getAuthHeaders();
-      const response = await this.client.get('/orders/V2/getOrders', {
+      const response = await this.client.get('/orders/V2/getAllOrders', {
         headers,
         params: queryParams,
       });
 
-      const orders = response.data.data || [];
+      // Easyecom returns: { code: 200, message: "Successful", data: { orders: [...] } }
+      const orders = response.data.data?.orders || response.data.data || [];
       logger.info(`✅ Fetched ${orders.length} orders from Easyecom`);
       return orders;
     } catch (error: any) {
@@ -200,17 +225,16 @@ export class EasyecomService {
 
         // Retry once with fresh token
         const headers = await this.getAuthHeaders();
-        const response = await this.client.get('/orders/V2/getOrders', {
+        const retryParams: any = {};
+        if (params.startDate) retryParams.start_date = params.startDate;
+        if (params.endDate) retryParams.end_date = params.endDate;
+
+        const response = await this.client.get('/orders/V2/getAllOrders', {
           headers,
-          params: {
-            limit: params.limit || 100,
-            offset: params.offset || 0,
-            ...(params.startDate && { start_date: params.startDate }),
-            ...(params.endDate && { end_date: params.endDate }),
-          },
+          params: retryParams,
         });
 
-        const orders = response.data.data || [];
+        const orders = response.data.data?.orders || response.data.data || [];
         logger.info(`✅ Fetched ${orders.length} orders from Easyecom (retry successful)`);
         return orders;
       }
@@ -241,38 +265,29 @@ export class EasyecomService {
     try {
       logger.info(`Syncing Easyecom orders from ${startDate.toISOString()} to ${endDate.toISOString()}`);
 
-      const startDateStr = startDate.toISOString().split('T')[0];
-      const endDateStr = endDate.toISOString().split('T')[0];
+      // Format dates as: YYYY-MM-DD HH:MM:SS
+      const formatDate = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      };
 
-      let allOrders: EasyecomOrderData[] = [];
-      let offset = 0;
-      const limit = 100;
+      const startDateStr = formatDate(startDate);
+      const endDateStr = formatDate(endDate);
 
-      // Easyecom API has pagination
-      while (true) {
-        const orders = await this.fetchOrders({
-          startDate: startDateStr,
-          endDate: endDateStr,
-          limit,
-          offset,
-        });
-
-        if (orders.length === 0) {
-          break;
-        }
-
-        allOrders = allOrders.concat(orders);
-        offset += limit;
-
-        // If we got fewer results than requested, we've reached the end
-        if (orders.length < limit) {
-          break;
-        }
-      }
+      // Fetch all orders for the date range
+      const orders = await this.fetchOrders({
+        startDate: startDateStr,
+        endDate: endDateStr,
+      });
 
       let syncedCount = 0;
 
-      for (const order of allOrders) {
+      for (const order of orders) {
         await this.saveOrder(order);
         syncedCount++;
       }
@@ -287,29 +302,38 @@ export class EasyecomService {
 
   async saveOrder(orderData: EasyecomOrderData): Promise<void> {
     try {
+      // Map Easyecom fields to our schema
+      const referenceNumber = orderData.reference_code || orderData.reference_number || String(orderData.invoice_id || orderData.order_id);
+      const marketplaceOrderId = orderData.marketplace_order_id || orderData.marketplace || '';
+      const totalAmount = orderData.total || orderData.total_amount || 0;
+      const currency = orderData.invoice_currency_code || orderData.currency || 'INR';
+      const status = orderData.status || (orderData.queue_status ? `Queue ${orderData.queue_status}` : 'Unknown');
+      const paymentStatus = orderData.payment_status || 'Unknown';
+      const createdAt = orderData.order_date || orderData.created_at || new Date().toISOString();
+
       await prisma.easyecomOrder.upsert({
         where: {
-          easyecomOrderId: orderData.order_id,
+          easyecomOrderId: String(orderData.order_id),
         },
         update: {
-          referenceNumber: orderData.reference_number,
-          marketplaceOrderId: orderData.marketplace_order_id,
-          totalAmount: parseFloat(orderData.total_amount.toString()),
-          currency: orderData.currency || 'INR',
-          status: orderData.status,
-          paymentStatus: orderData.payment_status,
-          createdAt: new Date(orderData.created_at),
+          referenceNumber,
+          marketplaceOrderId,
+          totalAmount: parseFloat(totalAmount.toString()),
+          currency,
+          status,
+          paymentStatus,
+          createdAt: new Date(createdAt),
           rawData: JSON.stringify(orderData),
         },
         create: {
-          easyecomOrderId: orderData.order_id,
-          referenceNumber: orderData.reference_number,
-          marketplaceOrderId: orderData.marketplace_order_id,
-          totalAmount: parseFloat(orderData.total_amount.toString()),
-          currency: orderData.currency || 'INR',
-          status: orderData.status,
-          paymentStatus: orderData.payment_status,
-          createdAt: new Date(orderData.created_at),
+          easyecomOrderId: String(orderData.order_id),
+          referenceNumber,
+          marketplaceOrderId,
+          totalAmount: parseFloat(totalAmount.toString()),
+          currency,
+          status,
+          paymentStatus,
+          createdAt: new Date(createdAt),
           rawData: JSON.stringify(orderData),
         },
       });
