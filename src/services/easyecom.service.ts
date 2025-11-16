@@ -27,10 +27,20 @@ export interface EasyecomOrderData {
 }
 
 interface AuthResponse {
+  data?: {
+    companyname?: string;
+    token?: {
+      jwt_token: string;
+      token_type: string;
+      expires_in: number;
+    };
+    [key: string]: any;
+  };
+  message?: string | null;
+  // Legacy support for direct token field
   token?: string;
   access_token?: string;
   expires_in?: number;
-  message?: string;
 }
 
 export class EasyecomService {
