@@ -193,32 +193,55 @@ export class EasyecomService {
     offset?: number;
   }): Promise<EasyecomOrderData[]> {
     try {
-      const queryParams: any = {};
+      const allOrders: EasyecomOrderData[] = [];
+      const limit = params.limit || 100; // Easyecom default limit per page
+      let offset = params.offset || 0;
+      let pageCount = 0;
+      let hasMoreOrders = true;
 
-      // Easyecom requires dates in format: YYYY-MM-DD HH:MM:SS
-      if (params.startDate) {
-        queryParams.start_date = params.startDate;
+      // Fetch all pages using offset-based pagination
+      while (hasMoreOrders) {
+        pageCount++;
+        const queryParams: any = {
+          limit,
+          offset,
+        };
+
+        // Easyecom requires dates in format: YYYY-MM-DD HH:MM:SS
+        if (params.startDate) {
+          queryParams.start_date = params.startDate;
+        }
+
+        if (params.endDate) {
+          queryParams.end_date = params.endDate;
+        }
+
+        logger.info(`Fetching Easyecom orders page ${pageCount} (offset: ${offset}, limit: ${limit})...`);
+
+        const headers = await this.getAuthHeaders();
+        const response = await this.client.get('/orders/V2/getAllOrders', {
+          headers,
+          params: queryParams,
+        });
+
+        // Easyecom returns: { code: 200, message: "Successful", data: { orders: [...] } }
+        const orders = response.data.data?.orders || response.data.data || [];
+        allOrders.push(...orders);
+
+        logger.info(`Fetched ${orders.length} orders from Easyecom (page ${pageCount}, total: ${allOrders.length})`);
+
+        // Check if we have more orders to fetch
+        if (orders.length < limit) {
+          // If we got fewer orders than the limit, we've reached the end
+          hasMoreOrders = false;
+        } else {
+          // Move to the next page
+          offset += limit;
+        }
       }
 
-      if (params.endDate) {
-        queryParams.end_date = params.endDate;
-      }
-
-      logger.info('Fetching Easyecom orders:', {
-        url: '/orders/V2/getAllOrders',
-        params: queryParams,
-      });
-
-      const headers = await this.getAuthHeaders();
-      const response = await this.client.get('/orders/V2/getAllOrders', {
-        headers,
-        params: queryParams,
-      });
-
-      // Easyecom returns: { code: 200, message: "Successful", data: { orders: [...] } }
-      const orders = response.data.data?.orders || response.data.data || [];
-      logger.info(`✅ Fetched ${orders.length} orders from Easyecom`);
-      return orders;
+      logger.info(`Completed fetching ALL Easyecom orders: ${allOrders.length} total orders across ${pageCount} pages`);
+      return allOrders;
     } catch (error: any) {
       logger.error('Error fetching Easyecom orders:', {
         message: error.message,
@@ -233,20 +256,42 @@ export class EasyecomService {
         this.authToken = null;
         this.tokenExpiry = null;
 
-        // Retry once with fresh token
-        const headers = await this.getAuthHeaders();
-        const retryParams: any = {};
-        if (params.startDate) retryParams.start_date = params.startDate;
-        if (params.endDate) retryParams.end_date = params.endDate;
+        // Retry once with fresh token - restart pagination from beginning
+        const allOrders: EasyecomOrderData[] = [];
+        const limit = params.limit || 100;
+        let offset = params.offset || 0;
+        let pageCount = 0;
+        let hasMoreOrders = true;
 
-        const response = await this.client.get('/orders/V2/getAllOrders', {
-          headers,
-          params: retryParams,
-        });
+        while (hasMoreOrders) {
+          pageCount++;
+          const retryParams: any = {
+            limit,
+            offset,
+          };
+          if (params.startDate) retryParams.start_date = params.startDate;
+          if (params.endDate) retryParams.end_date = params.endDate;
 
-        const orders = response.data.data?.orders || response.data.data || [];
-        logger.info(`✅ Fetched ${orders.length} orders from Easyecom (retry successful)`);
-        return orders;
+          const headers = await this.getAuthHeaders();
+          const response = await this.client.get('/orders/V2/getAllOrders', {
+            headers,
+            params: retryParams,
+          });
+
+          const orders = response.data.data?.orders || response.data.data || [];
+          allOrders.push(...orders);
+
+          logger.info(`Fetched ${orders.length} orders from Easyecom (retry page ${pageCount}, total: ${allOrders.length})`);
+
+          if (orders.length < limit) {
+            hasMoreOrders = false;
+          } else {
+            offset += limit;
+          }
+        }
+
+        logger.info(`✅ Completed fetching ALL Easyecom orders (retry successful): ${allOrders.length} total orders`);
+        return allOrders;
       }
 
       throw error;

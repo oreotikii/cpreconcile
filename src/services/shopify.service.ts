@@ -36,29 +36,90 @@ export class ShopifyService {
     status?: string;
   }): Promise<ShopifyOrderData[]> {
     try {
-      const queryParams: any = {
-        limit: params.limit || 250,
+      const allOrders: ShopifyOrderData[] = [];
+      let pageInfo: string | null = null;
+      const limit = params.limit || 250; // Shopify max is 250
+      let pageCount = 0;
+
+      const baseParams: any = {
+        limit,
         status: params.status || 'any',
       };
 
       if (params.createdAtMin) {
-        queryParams.created_at_min = params.createdAtMin.toISOString();
+        baseParams.created_at_min = params.createdAtMin.toISOString();
       }
 
       if (params.createdAtMax) {
-        queryParams.created_at_max = params.createdAtMax.toISOString();
+        baseParams.created_at_max = params.createdAtMax.toISOString();
       }
 
-      const response = await this.client.get('/orders.json', {
-        params: queryParams,
-      });
+      // Fetch all pages using cursor-based pagination
+      do {
+        pageCount++;
+        const queryParams = { ...baseParams };
 
-      logger.info(`Fetched ${response.data.orders.length} orders from Shopify`);
-      return response.data.orders;
+        // Add page_info for subsequent pages (Shopify uses Link header pagination)
+        if (pageInfo) {
+          queryParams.page_info = pageInfo;
+          // When using page_info, we should not include date filters again
+          delete queryParams.created_at_min;
+          delete queryParams.created_at_max;
+        }
+
+        logger.info(`Fetching Shopify orders page ${pageCount}...`);
+
+        const response = await this.client.get('/orders.json', {
+          params: queryParams,
+        });
+
+        const orders = response.data.orders || [];
+        allOrders.push(...orders);
+
+        logger.info(`Fetched ${orders.length} orders from Shopify (page ${pageCount}, total: ${allOrders.length})`);
+
+        // Extract next page info from Link header
+        // Shopify uses Link header with rel="next" for pagination
+        const linkHeader = response.headers['link'];
+        pageInfo = this.extractNextPageInfo(linkHeader);
+
+        // If we got fewer orders than the limit, we've reached the end
+        if (orders.length < limit) {
+          pageInfo = null;
+        }
+
+      } while (pageInfo);
+
+      logger.info(`Completed fetching ALL Shopify orders: ${allOrders.length} total orders across ${pageCount} pages`);
+      return allOrders;
     } catch (error: any) {
       logger.error('Error fetching Shopify orders:', error.message);
       throw error;
     }
+  }
+
+  /**
+   * Extract next page info from Shopify Link header
+   * Link header format: <https://.../orders.json?page_info=xyz>; rel="next"
+   */
+  private extractNextPageInfo(linkHeader: string | undefined): string | null {
+    if (!linkHeader) {
+      return null;
+    }
+
+    // Parse Link header to find rel="next"
+    const links = linkHeader.split(',');
+    for (const link of links) {
+      if (link.includes('rel="next"')) {
+        // Extract page_info parameter from URL
+        const match = link.match(/page_info=([^&>]+)/);
+        if (match) {
+          return match[1];
+        }
+      }
+    }
+
+    return null;
   }
 
   async fetchOrderById(orderId: string): Promise<ShopifyOrderData | null> {
