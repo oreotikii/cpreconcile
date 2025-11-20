@@ -236,11 +236,11 @@ export function Dashboard() {
             {/* Date Range Selector */}
             <div className="flex flex-wrap gap-4 items-end">
               <div className="flex-1 min-w-[200px]">
-                <label className="text-sm font-medium mb-2 block">Lookback Days</label>
+                <label className="text-sm font-semibold mb-2 block text-foreground">Lookback Days</label>
                 <select
                   value={lookbackDays}
                   onChange={(e) => setLookbackDays(Number(e.target.value))}
-                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full h-10 rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
                 >
                   <option value={7}>Last 7 days</option>
                   <option value={14}>Last 14 days</option>
@@ -251,22 +251,22 @@ export function Dashboard() {
               </div>
 
               <div className="flex-1 min-w-[200px]">
-                <label className="text-sm font-medium mb-2 block">Start Date</label>
+                <label className="text-sm font-semibold mb-2 block text-foreground">Start Date</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full h-10 rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
                 />
               </div>
 
               <div className="flex-1 min-w-[200px]">
-                <label className="text-sm font-medium mb-2 block">End Date</label>
+                <label className="text-sm font-semibold mb-2 block text-foreground">End Date</label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full h-10 rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
                 />
               </div>
             </div>
@@ -336,28 +336,28 @@ export function Dashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2">Shopify Order</th>
-                      <th className="text-left p-2">Razorpay Payment</th>
-                      <th className="text-left p-2">Easyecom Order</th>
-                      <th className="text-left p-2">Status</th>
-                      <th className="text-left p-2">Confidence</th>
-                      <th className="text-left p-2">Date</th>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="text-left p-3 text-sm font-semibold">Shopify Order</th>
+                      <th className="text-left p-3 text-sm font-semibold">Razorpay Payment</th>
+                      <th className="text-left p-3 text-sm font-semibold">Easyecom Order</th>
+                      <th className="text-left p-3 text-sm font-semibold">Status</th>
+                      <th className="text-left p-3 text-sm font-semibold">Confidence</th>
+                      <th className="text-left p-3 text-sm font-semibold">Date</th>
                     </tr>
                   </thead>
                   <tbody>
                     {reconciliationResults.slice(0, 10).map((result) => (
-                      <tr key={result.id} className="border-b">
-                        <td className="p-2 text-sm">{result.shopifyOrderId || "-"}</td>
-                        <td className="p-2 text-sm">{result.razorpayPaymentId || "-"}</td>
-                        <td className="p-2 text-sm">{result.easyecomOrderId || "-"}</td>
-                        <td className="p-2">
+                      <tr key={result.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                        <td className="p-3 text-sm font-medium">{result.shopifyOrderId || "-"}</td>
+                        <td className="p-3 text-sm font-medium">{result.razorpayPaymentId || "-"}</td>
+                        <td className="p-3 text-sm font-medium">{result.easyecomOrderId || "-"}</td>
+                        <td className="p-3">
                           <Badge variant={getStatusColor(result.status) as any}>
                             {result.status}
                           </Badge>
                         </td>
-                        <td className="p-2 text-sm">{(result.matchConfidence * 100).toFixed(0)}%</td>
-                        <td className="p-2 text-sm text-muted-foreground">
+                        <td className="p-3 text-sm font-medium">{(result.matchConfidence * 100).toFixed(0)}%</td>
+                        <td className="p-3 text-sm text-muted-foreground">
                           {new Date(result.createdAt).toLocaleDateString()}
                         </td>
                       </tr>
